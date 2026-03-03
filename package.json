@@ -1,0 +1,27 @@
+{
+  "name": "ctucal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/20261664/ctucal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/20261664/ctucal/issues"
+  },
+  "homepage": "https://github.com/20261664/ctucal#readme",
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
+    "nodemon": "^3.1.14"
+  }
+}
