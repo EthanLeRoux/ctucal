@@ -8,7 +8,12 @@ async function getTasksFromCTU() {
   try {
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',   // ✅ important for containers
+        '--disable-gpu'
+      ]
     });
 
     const page = await browser.newPage();
@@ -19,21 +24,32 @@ async function getTasksFromCTU() {
 
     await page.goto(
       'https://ctu.campusmanager.co.za/portal/student-login.php',
-      { waitUntil: 'networkidle2' }
+      {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000
+      }
     );
 
-    await page.waitForSelector('#username', { visible: true });
-    await page.waitForSelector('#password', { visible: true });
+    // ✅ Add timeout protection so it doesn't hang forever
+    await page.waitForSelector('#username', { visible: true, timeout: 15000 });
+    await page.waitForSelector('#password', { visible: true, timeout: 15000 });
 
-    const username = String(process.env.CTU_USERNAME);
-    const password = String(process.env.CTU_PASSWORD);
+    const username = process.env.CTU_USERNAME;
+    const password = process.env.CTU_PASSWORD;
+
+    if (!username || !password) {
+      throw new Error('Missing CTU credentials in environment variables');
+    }
 
     await page.type('#username', username);
     await page.type('#password', password);
 
     await Promise.all([
       page.click('#btnlogin'),
-      page.waitForNavigation({ waitUntil: 'networkidle2' })
+      page.waitForNavigation({
+        waitUntil: 'domcontentloaded',
+        timeout: 30000
+      })
     ]);
 
     const currentUrl = page.url();
@@ -41,7 +57,9 @@ async function getTasksFromCTU() {
       throw new Error('Login failed');
     }
 
-    // Extract assessments
+    // ✅ Wait for table to exist before scraping
+    await page.waitForSelector('table.table-hover', { timeout: 15000 });
+
     const tasks = await page.evaluate(() => {
       const rows = document.querySelectorAll('table.table-hover tbody tr');
       const results = [];
@@ -99,8 +117,7 @@ router.get('/calendar.ics', async (req, res) => {
 
       const uid = `${task.assessment}-${start}@ctu-calendar`;
 
-      return `
-BEGIN:VEVENT
+      return `BEGIN:VEVENT
 UID:${uid}
 DTSTAMP:${start}T080000Z
 DTSTART;VALUE=DATE:${start}
@@ -110,8 +127,7 @@ DESCRIPTION:${task.module}
 END:VEVENT`;
     }).join('\n');
 
-    const calendar = `
-BEGIN:VCALENDAR
+    const calendar = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//CTU Calendar//EN
 CALSCALE:GREGORIAN
