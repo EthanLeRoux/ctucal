@@ -89,6 +89,15 @@ async function getTasksFromCTU() {
   }
 }
 
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Login to CTU portal and fetch assessments
+ *     responses:
+ *       200:
+ *         description: List of tasks
+ */
 router.post('/login', async (req, res) => {
   try {
     const tasks = await getTasksFromCTU();
@@ -105,6 +114,16 @@ router.post('/login', async (req, res) => {
   }
 });
 
+
+/**
+ * @swagger
+ * /calendar.ics:
+ *   get:
+ *     summary: Generate calendar feed
+ *     responses:
+ *       200:
+ *         description: ICS calendar file
+ */
 router.get('/calendar.ics', async (req, res) => {
   try {
     const tasks = await getTasksFromCTU();
