@@ -112,19 +112,6 @@ ctucal/
 ├── .env                    # Environment variables (create this file)
 └── .gitignore             # Git ignore rules
 ```
-
-## Dependencies
-
-- **express** - Web framework for Node.js
-- **puppeteer** - Headless browser automation for web scraping
-- **cheerio** - Fast HTML parsing and manipulation
-- **cookie-parser** - Middleware for parsing cookies
-- **node-fetch** - Fetch API implementation for Node.js
-- **fetch-cookie** - Cookie handling for HTTP requests
-- **tough-cookie** - Cookie parsing and storage
-- **dotenv** - Environment variable management
-- **nodemon** - Development server with auto-restart
-
 ## How It Works
 
 1. The application uses Puppeteer to automate a browser instance
