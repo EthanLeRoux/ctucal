@@ -7,87 +7,27 @@ const nodemailer = require("nodemailer");
 async function getTasksFromCTU() {
   let browser;
 
-  try {
-    browser = await puppeteer.launch({
-      args: [
-        ...chromium.args,
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu'
-      ],
-      executablePath: await chromium.executablePath(),
-      headless: true
-    });
+if (process.env.RENDER) {
+  // Render / serverless environment
+  browser = await puppeteer.launch({
+    args: [
+      ...chromium.args,
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu'
+    ],
+    executablePath: await chromium.executablePath(),
+    headless: true
+  });
+} else {
+  // Local development
+  const puppeteerLocal = require("puppeteer");
 
-    const page = await browser.newPage();
-
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36'
-    );
-
-    await page.goto(
-      'https://ctu.campusmanager.co.za/portal/student-login.php',
-      {
-        waitUntil: 'domcontentloaded',
-        timeout: 30000
-      }
-    );
-
-    await page.waitForSelector('#username', { visible: true, timeout: 15000 });
-    await page.waitForSelector('#password', { visible: true, timeout: 15000 });
-
-    const username = process.env.CTU_USERNAME;
-    const password = process.env.CTU_PASSWORD;
-
-    if (!username || !password) {
-      throw new Error('Missing CTU credentials in environment variables');
-    }
-
-    await page.type('#username', username);
-    await page.type('#password', password);
-
-    await Promise.all([
-      page.click('#btnlogin'),
-      page.waitForNavigation({
-        waitUntil: 'domcontentloaded',
-        timeout: 30000
-      })
-    ]);
-
-    const currentUrl = page.url();
-    if (currentUrl.includes('student-login.php')) {
-      throw new Error('Login failed');
-    }
-
-    await page.waitForSelector('table.table-hover', { timeout: 15000 });
-
-    const tasks = await page.evaluate(() => {
-      const rows = document.querySelectorAll('table.table-hover tbody tr');
-      const results = [];
-
-      rows.forEach(row => {
-        const cols = row.querySelectorAll('td');
-
-        if (cols.length === 3) {
-          results.push({
-            module: cols[0].innerText.trim(),
-            assessment: cols[1].innerText.trim(),
-            due: cols[2].innerText.trim()
-          });
-        }
-      });
-
-      return results;
-    });
-
-    await browser.close();
-    return tasks;
-
-  } catch (err) {
-    if (browser) await browser.close();
-    throw err;
-  }
+  browser = await puppeteerLocal.launch({
+    headless: true
+  });
+}
 }
 
 async function sendTasksEmail(tasks) {
